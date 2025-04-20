@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
   <title>Floating Time</title>
   <style>
     body {
@@ -10,7 +14,7 @@
       padding: 0;
       font-family: Arial, sans-serif;
     }
-    
+
     #floating-time {
       position: fixed;
       width: 100px;
@@ -29,65 +33,127 @@
     }
   </style>
 </head>
+
 <body>
   <div id="floating-time"></div>
 
+  <div id="showFloatBtn">开启</div>
+
   <script>
     const floatingTime = document.getElementById('floating-time');
-    
+
     // 初始位置
     floatingTime.style.left = (window.innerWidth - 100) + 'px';
     floatingTime.style.top = (window.innerHeight / 2) + 'px';
-    
+
     // 更新时间
     function updateTime() {
       const now = new Date();
       floatingTime.textContent = now.toLocaleTimeString();
     }
-    
+
     updateTime();
     setInterval(updateTime, 1000);
-    
+
     // 拖拽功能
     let isDragging = false;
     let offsetX, offsetY;
-    
+
     floatingTime.addEventListener('mousedown', startDrag);
     floatingTime.addEventListener('touchstart', startDrag, { passive: false });
-    
+
     document.addEventListener('mousemove', drag);
     document.addEventListener('touchmove', drag, { passive: false });
-    
+
     document.addEventListener('mouseup', endDrag);
     document.addEventListener('touchend', endDrag);
-    
+
     function startDrag(e) {
       isDragging = true;
       const clientX = e.clientX || e.touches[0].clientX;
       const clientY = e.clientY || e.touches[0].clientY;
-      
+
       const rect = floatingTime.getBoundingClientRect();
       offsetX = clientX - rect.left;
       offsetY = clientY - rect.top;
-      
+
       e.preventDefault();
     }
-    
+
     function drag(e) {
       if (!isDragging) return;
-      
+
       const clientX = e.clientX || e.touches[0].clientX;
       const clientY = e.clientY || e.touches[0].clientY;
-      
+
       floatingTime.style.left = (clientX - offsetX) + 'px';
       floatingTime.style.top = (clientY - offsetY) + 'px';
-      
+
       e.preventDefault();
     }
-    
+
     function endDrag() {
       isDragging = false;
     }
   </script>
+
+  <script>
+    // 在index.js中
+    document.addEventListener('deviceready', function () {
+      // 检查权限
+      checkOverlayPermission();
+
+      // 悬浮窗按钮
+      document.getElementById('showFloatBtn').addEventListener('click', function () {
+        createFloatingWindow();
+      });
+    }, false);
+
+    function checkOverlayPermission() {
+      if (window.OverlayPermission) {
+        window.OverlayPermission.checkPermission(function (granted) {
+          if (!granted) {
+            showPermissionAlert();
+          }
+        });
+      }
+    }
+
+    function showPermissionAlert() {
+      navigator.notification.confirm(
+        '需要悬浮窗权限才能使用此功能，是否去设置？',
+        function (buttonIndex) {
+          if (buttonIndex === 2) { // 确认按钮
+            window.OverlayPermission.requestPermission(
+              function () { console.log("权限已获取"); },
+              function () { console.log("权限被拒绝"); }
+            );
+          }
+        },
+        '权限请求',
+        ['取消', '去设置']
+      );
+    }
+
+    function createFloatingWindow() {
+      if (window.FloatingWindow) {
+        window.FloatingWindow.create({
+          url: 'floating.html',
+          width: 280,
+          height: 350,
+          x: 20,
+          y: 100,
+          draggable: true
+        }, function () {
+          console.log("悬浮窗已显示");
+        }, function (err) {
+          alert("无法显示悬浮窗: " + err);
+        });
+      } else {
+        alert("当前设备不支持悬浮窗功能");
+      }
+    }
+  </script>
 </body>
+
 </html>
